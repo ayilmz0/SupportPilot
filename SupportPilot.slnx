@@ -1,0 +1,12 @@
+<Solution>
+  <Project Path="SupportPilot.Application/SupportPilot.Application.csproj" />
+  <Project Path="SupportPilot.Core/SupportPilot.Core.csproj" />
+  <Project Path="SupportPilot.Frontend/supportpilot.frontend.esproj">
+    <Build />
+    <Deploy />
+  </Project>
+  <Project Path="SupportPilot.Infrastructure/SupportPilot.Infrastructure.csproj" />
+  <Project Path="SupportPilot.Tests/SupportPilot.Tests.csproj" />
+  <Project Path="SupportPilot.WebAPI/SupportPilot.WebAPI.csproj" />
+  <Project Path="SupportPilot.Worker/SupportPilot.Worker.csproj" />
+</Solution>
