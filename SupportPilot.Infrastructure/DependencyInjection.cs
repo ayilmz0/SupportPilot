@@ -1,10 +1,12 @@
-﻿
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using SupportPilot.Application.Abstractions.Persistence;
+using SupportPilot.Application.Common.Interfaces;
 using SupportPilot.Infrastructure.Data;
+using SupportPilot.Infrastructure.Data.Repositories;
 using SupportPilot.Infrastructure.Repositories;
+using SupportPilot.Infrastructure.Security;
 
 namespace SupportPilot.Infrastructure;
 
@@ -14,8 +16,8 @@ public static class DependencyInjection
         this IServiceCollection services,
         IConfiguration configuration)
     {
-        var connectionString =
-            configuration.GetConnectionString("DefaultConnection")
+        var connectionString = configuration
+            .GetConnectionString("DefaultConnection")
             ?? throw new InvalidOperationException(
                 "DefaultConnection connection string bulunamadı.");
 
@@ -23,6 +25,14 @@ public static class DependencyInjection
             options.UseSqlServer(connectionString));
 
         services.AddScoped<ITicketRepository, TicketRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IPasswordHasher, BCryptPasswordHasher>();
+        services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
+        services.AddScoped<IRefreshTokenGenerator, RefreshTokenGenerator>();
+        services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+
+        services.Configure<JwtSettings>(
+            configuration.GetSection(JwtSettings.SectionName));
 
         return services;
     }

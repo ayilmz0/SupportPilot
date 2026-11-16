@@ -1,5 +1,4 @@
-﻿
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using SupportPilot.Core.Entities;
 
 namespace SupportPilot.Infrastructure.Data;
@@ -24,4 +23,6 @@ public sealed class AppDbContext : DbContext
     public DbSet<User> Users => Set<User>();
 
     public DbSet<Department> Departments => Set<Department>();
+
+    public DbSet<RefreshToken> RefreshTokens => Set<RefreshToken>();
 }
