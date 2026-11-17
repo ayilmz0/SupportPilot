@@ -33,12 +33,22 @@ public sealed class UserRepository : IUserRepository
     }
 
     public async Task<User?> GetByEmailAsync(
-    string email,
-    CancellationToken cancellationToken = default)
+        string email,
+        CancellationToken cancellationToken = default)
     {
         return await _context.Users
             .FirstOrDefaultAsync(
                 user => user.Email == email,
+                cancellationToken);
+    }
+
+    public async Task<User?> GetByIdAsync(
+        Guid id,
+        CancellationToken cancellationToken = default)
+    {
+        return await _context.Users
+            .FirstOrDefaultAsync(
+                user => user.Id == id,
                 cancellationToken);
     }
 }

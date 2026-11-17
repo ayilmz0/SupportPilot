@@ -13,6 +13,18 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication();
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("ReactFrontend", policy =>
+    {
+        policy
+            .WithOrigins("http://localhost:53562")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
+
 var jwtSettings = builder.Configuration
     .GetSection(JwtSettings.SectionName)
     .Get<JwtSettings>()
@@ -40,6 +52,25 @@ builder.Services
             IssuerSigningKey = signingKey,
 
             ClockSkew = TimeSpan.Zero
+        };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                // Önce Authorization header kontrol edilir.
+                var authorizationHeader =
+                    context.Request.Headers.Authorization.ToString();
+
+                if (!string.IsNullOrWhiteSpace(authorizationHeader))
+                    return Task.CompletedTask;
+
+                // Header yoksa Access Token Cookie'den okunur.
+                context.Token = context.Request.Cookies[
+                    "supportpilot.access_token"];
+
+                return Task.CompletedTask;
+            }
         };
     });
 
@@ -84,6 +115,8 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+app.UseCors("ReactFrontend");
 
 app.UseAuthentication();
 app.UseAuthorization();
