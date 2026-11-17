@@ -35,10 +35,37 @@ public sealed class RefreshTokenRepository : IRefreshTokenRepository
             cancellationToken);
     }
 
-    public async Task RevokeAsync(
-        RefreshToken refreshToken,
-        CancellationToken cancellationToken = default)
+    public async Task RotateAsync(
+    RefreshToken currentToken,
+    RefreshToken newToken,
+    CancellationToken cancellationToken = default)
     {
+        await using var transaction =
+            await _context.Database.BeginTransactionAsync(cancellationToken);
+
+        currentToken.Revoke();
+
+        await _context.RefreshTokens.AddAsync(
+            newToken,
+            cancellationToken);
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        await transaction.CommitAsync(cancellationToken);
+    }
+
+    public async Task RevokeByTokenHashAsync(
+    string tokenHash,
+    CancellationToken cancellationToken = default)
+    {
+        var refreshToken = await _context.RefreshTokens
+            .FirstOrDefaultAsync(
+                x => x.TokenHash == tokenHash,
+                cancellationToken);
+
+        if (refreshToken is null || !refreshToken.IsActive)
+            return;
+
         refreshToken.Revoke();
 
         await _context.SaveChangesAsync(cancellationToken);

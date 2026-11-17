@@ -1,5 +1,7 @@
 ﻿using Microsoft.Extensions.DependencyInjection;
 using SupportPilot.Application.Features.Authentication.Login;
+using SupportPilot.Application.Features.Authentication.Logout;
+using SupportPilot.Application.Features.Authentication.Refresh;
 using SupportPilot.Application.Features.Authentication.Register;
 using SupportPilot.Application.Features.Tickets.CreateTicket;
 using SupportPilot.Application.Features.Tickets.GetAllTickets;
@@ -17,6 +19,8 @@ public static class DependencyInjection
         services.AddScoped<GetAllTicketsService>();
         services.AddScoped<RegisterUserService>();
         services.AddScoped<LoginUserService>();
+        services.AddScoped<RefreshTokenService>();
+        services.AddScoped<LogoutUserService>();
 
         return services;
     }

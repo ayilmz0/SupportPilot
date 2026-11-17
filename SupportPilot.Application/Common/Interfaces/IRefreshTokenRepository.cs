@@ -1,5 +1,4 @@
-﻿
-using SupportPilot.Core.Entities;
+﻿using SupportPilot.Core.Entities;
 
 namespace SupportPilot.Application.Common.Interfaces;
 
@@ -13,7 +12,12 @@ public interface IRefreshTokenRepository
         string tokenHash,
         CancellationToken cancellationToken = default);
 
-    Task RevokeAsync(
-        RefreshToken refreshToken,
+    Task RotateAsync(
+        RefreshToken currentToken,
+        RefreshToken newToken,
         CancellationToken cancellationToken = default);
+
+    Task RevokeByTokenHashAsync(
+    string tokenHash,
+    CancellationToken cancellationToken = default);
 }
