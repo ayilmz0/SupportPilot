@@ -7,6 +7,8 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using SupportPilot.Infrastructure.Security;
 using Microsoft.OpenApi;
+using System.IdentityModel.Tokens.Jwt;
+using SupportPilot.Application.Common.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -34,6 +36,7 @@ var jwtSettings = builder.Configuration
 var signingKey = new SymmetricSecurityKey(
     Encoding.UTF8.GetBytes(jwtSettings.Secret));
 
+
 builder.Services
     .AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     .AddJwtBearer(options =>
@@ -58,21 +61,47 @@ builder.Services
         {
             OnMessageReceived = context =>
             {
-                // Önce Authorization header kontrol edilir.
                 var authorizationHeader =
                     context.Request.Headers.Authorization.ToString();
 
                 if (!string.IsNullOrWhiteSpace(authorizationHeader))
                     return Task.CompletedTask;
 
-                // Header yoksa Access Token Cookie'den okunur.
                 context.Token = context.Request.Cookies[
                     "supportpilot.access_token"];
 
                 return Task.CompletedTask;
+            },
+
+            OnTokenValidated = async context =>
+            {
+                var jti = context.Principal?
+                    .FindFirst(JwtRegisteredClaimNames.Jti)?
+                    .Value;
+
+                if (string.IsNullOrWhiteSpace(jti))
+                {
+                    context.Fail("Token ID is missing.");
+                    return;
+                }
+
+                var redisService = context.HttpContext
+                    .RequestServices
+                    .GetRequiredService<IRedisService>();
+
+                var blacklistKey = $"blacklist:{jti}";
+
+                var isBlacklisted =
+                    await redisService.ExistsAsync(blacklistKey);
+
+                if (isBlacklisted)
+                {
+                    context.Fail("This access token has been revoked.");
+                }
             }
         };
     });
+
 
 builder.Services.AddAuthorization();
 

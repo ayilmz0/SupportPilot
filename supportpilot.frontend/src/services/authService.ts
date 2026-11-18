@@ -49,6 +49,12 @@ export async function getMyProfile(): Promise<ProfileResponse> {
     method: "GET",
   });
 
+  if (response.status === 401) {
+    throw new Error(
+      "Your session has expired. Please sign in again."
+    );
+  }
+
   if (!response.ok) {
     throw new Error("Could not retrieve profile.");
   }

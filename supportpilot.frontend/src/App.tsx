@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   login,
@@ -7,7 +6,10 @@ import {
   getMyProfile,
 } from "./services/authService";
 
-import { apiRequest } from "./services/apiClient";
+import {
+  apiRequest,
+  onSessionExpired,
+} from "./services/apiClient";
 
 import type { ProfileResponse } from "./services/authService";
 
@@ -20,6 +22,19 @@ function App() {
   const [profile, setProfile] = useState<ProfileResponse | null>(null);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  // Merkezi oturum sona erme dinleyicisi.
+  useEffect(() => {
+    const unsubscribe = onSessionExpired(() => {
+      setProfile(null);
+      setPassword("");
+      setError(
+        "Your session has expired. Please sign in again."
+      );
+    });
+
+    return unsubscribe;
+  }, []);
 
   async function handleLogin(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -199,4 +214,5 @@ function App() {
 }
 
 export default App;
+
 

@@ -31,6 +31,19 @@ public class Department
         CreatedAtUtc = DateTime.UtcNow;
     }
 
+    public void Update(string name, string description)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+            throw new ArgumentException("Department name cannot be empty.");
+
+        if (name.Length > 100)
+            throw new ArgumentException(
+                "Department name cannot exceed 100 characters.");
+
+        Name = name.Trim();
+        Description = description?.Trim() ?? string.Empty;
+    }
+
     public void Deactivate()
     {
         IsActive = false;
