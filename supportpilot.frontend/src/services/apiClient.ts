@@ -1,12 +1,29 @@
-
 const API_URL = "http://localhost:5050/api";
 
-// Devam eden refresh işlemini tutar.
+type SessionExpiredListener = () => void;
+
+const sessionExpiredListeners = new Set<SessionExpiredListener>();
+
 let refreshPromise: Promise<boolean> | null = null;
 
+// Oturum sona erdiğinde dinleyicileri bilgilendirir.
+function notifySessionExpired(): void {
+  sessionExpiredListeners.forEach((listener) => listener());
+}
+
+// React bileşenlerinin oturum sona ermesini dinlemesini sağlar.
+export function onSessionExpired(
+  listener: SessionExpiredListener
+): () => void {
+  sessionExpiredListeners.add(listener);
+
+  // Listener kaldırma fonksiyonu.
+  return () => {
+    sessionExpiredListeners.delete(listener);
+  };
+}
+
 async function refreshAccessToken(): Promise<boolean> {
-  // Başka bir istek refresh başlattıysa
-  // yeni refresh isteği göndermek yerine onu bekle.
   if (refreshPromise) {
     return refreshPromise;
   }
@@ -25,7 +42,6 @@ async function refreshAccessToken(): Promise<boolean> {
     } catch {
       return false;
     } finally {
-      // İşlem bittikten sonra yeni refresh işlemlerine izin ver.
       refreshPromise = null;
     }
   })();
@@ -37,29 +53,34 @@ export async function apiRequest(
   endpoint: string,
   options: RequestInit = {}
 ): Promise<Response> {
-  // İlk API isteği
   const response = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     credentials: "include",
   });
 
-  // 401 dışında bir cevap geldiyse doğrudan döndür.
   if (response.status !== 401) {
     return response;
   }
 
-  // Refresh işlemini başlat veya devam eden işlemi bekle.
   const refreshSucceeded = await refreshAccessToken();
 
-  // Refresh başarısızsa ilk 401 cevabını döndür.
   if (!refreshSucceeded) {
+    notifySessionExpired();
     return response;
   }
 
-  // Refresh başarılıysa orijinal isteği tekrar gönder.
-  return fetch(`${API_URL}${endpoint}`, {
+  const retryResponse = await fetch(`${API_URL}${endpoint}`, {
     ...options,
     credentials: "include",
   });
+
+  // Yeni token ile tekrar deneme de 401 döndürürse
+  // oturum sona ermiş kabul edilir.
+  if (retryResponse.status === 401) {
+    notifySessionExpired();
+  }
+
+  return retryResponse;
 }
+
 

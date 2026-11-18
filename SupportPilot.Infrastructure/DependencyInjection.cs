@@ -7,6 +7,7 @@ using SupportPilot.Infrastructure.Data;
 using SupportPilot.Infrastructure.Data.Repositories;
 using SupportPilot.Infrastructure.Repositories;
 using SupportPilot.Infrastructure.Security;
+using SupportPilot.Infrastructure.Redis;
 
 namespace SupportPilot.Infrastructure;
 
@@ -30,9 +31,19 @@ public static class DependencyInjection
         services.AddScoped<IJwtTokenGenerator, JwtTokenGenerator>();
         services.AddScoped<IRefreshTokenGenerator, RefreshTokenGenerator>();
         services.AddScoped<IRefreshTokenRepository, RefreshTokenRepository>();
+        services.AddScoped<IRedisService, RedisService>();
+        services.AddScoped<IDepartmentRepository, DepartmentRepository>();
 
         services.Configure<JwtSettings>(
             configuration.GetSection(JwtSettings.SectionName));
+
+        var redisConnectionString =
+    configuration["Redis:ConnectionString"]
+    ?? throw new InvalidOperationException(
+        "Redis connection string is missing.");
+
+        services.AddSingleton(
+            new RedisConnection(redisConnectionString));
 
         return services;
     }
